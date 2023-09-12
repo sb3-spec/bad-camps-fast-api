@@ -1,4 +1,6 @@
 import os
+import json
+from types import SimpleNamespace
 from dotenv import load_dotenv
 from fastapi import FastAPI, Depends, Request
 from starlette.templating import Jinja2Templates
@@ -38,29 +40,18 @@ def home(request: Request, db: Session = Depends(get_db)):
 @app.post("/add")
 async def add(request: Request, db: Session = Depends(get_db)):
     body = await request.json()
-
-    if type(body) == list:
-        for item in body:
-            try:
-                new_camp = models.Camp(
-                    name=item["name"], description=item["description"]
-                )
-            except:
-                return {"error": "Could not add to db"}
-
-            db.add(new_camp)
-            db.commit()
-        return body
-
+    
+    
     try:
-        new_camp = models.Camp(name=body["name"], description=body["description"])
-
+        new_camp = json.loads(body, object_hook=lambda d: models.Camp(**d))
     except:
         return {"error": "Could not add to db"}
+
+    
     db.add(new_camp)
     db.commit()
 
-    return body
+    return new_camp
 
 
 @app.get("/createIndex")
