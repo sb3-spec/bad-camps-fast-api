@@ -9,6 +9,7 @@ class Camp(Base):
     name = Column(String)
     phoneNumber = Column(String)
     description = Column(String)
+    campType = Column(String)
     tags = Column(ARRAY(String))
     image_urls = Column(ARRAY(String))
     website = Column(String)
@@ -17,3 +18,4 @@ class Camp(Base):
     state = Column(String)
     zipCode = Column(String)
     country = Column(String)
+    aptSuiteOther = Column(String)
