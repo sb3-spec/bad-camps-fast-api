@@ -45,6 +45,7 @@ async def add(request: Request, db: Session = Depends(get_db)):
     try:
         new_camp = json.loads(body, object_hook=lambda d: models.Camp(**d))
     except:
+        print("Error adding camp to database.")
         return {"error": "Could not add to db"}
 
     
