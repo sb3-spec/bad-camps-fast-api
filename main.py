@@ -3,6 +3,7 @@ import json
 from types import SimpleNamespace
 from dotenv import load_dotenv
 from fastapi import FastAPI, Depends, Request
+from fastapi.middleware.cors import CORSMiddleware
 from starlette.templating import Jinja2Templates
 
 from algoliasearch.search_client import SearchClient
@@ -15,9 +16,22 @@ models.Base.metadata.create_all(bind=engine)
 
 templates = Jinja2Templates(directory="templates")
 
+origins = [
+    'http://localhost:5173',
+    'http://localhost'
+]
+
 load_dotenv()
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 client = SearchClient.create(
     os.getenv("ALGOLIA_APP_ID"), os.getenv("ALGOLIA_ADMIN_API_KEY")
@@ -28,6 +42,8 @@ def get_db():
     db = SessionLocal()
     try:
         yield db
+    except ConnectionError as err:
+        print(err.args)
     finally:
         db.close()
 
@@ -39,20 +55,23 @@ def home(request: Request, db: Session = Depends(get_db)):
 
 @app.post("/add")
 async def add(request: Request, db: Session = Depends(get_db)):
-    body = await request.json()
+    
+    try:
+        body = await request.body()
+    except TypeError as err:
+        print(err.args)
     
     
     try:
         new_camp = json.loads(body, object_hook=lambda d: models.Camp(**d))
-    except:
-        print("Error adding camp to database.")
-        return {"error": "Could not add to db"}
+    except ValueError as err:
+        print(err.args)
 
     
     db.add(new_camp)
     db.commit()
 
-    return new_camp
+    return {"message": "Camp added successfully."}
 
 
 @app.get("/createIndex")
