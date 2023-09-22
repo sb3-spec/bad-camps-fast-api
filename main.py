@@ -1,6 +1,5 @@
 import os
 import json
-from types import SimpleNamespace
 from dotenv import load_dotenv
 from fastapi import FastAPI, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -18,7 +17,9 @@ templates = Jinja2Templates(directory="templates")
 
 origins = [
     'http://localhost:5173',
-    'http://localhost'
+    'localhost:5173',
+    'localhost',
+
 ]
 
 load_dotenv()
@@ -64,14 +65,17 @@ async def add(request: Request, db: Session = Depends(get_db)):
     
     try:
         new_camp = json.loads(body, object_hook=lambda d: models.Camp(**d))
+        
     except ValueError as err:
         print(err.args)
+        return {"error": err.args}
 
-    
     db.add(new_camp)
     db.commit()
 
-    return {"message": "Camp added successfully."}
+    db.refresh(new_camp)
+    
+    return new_camp
 
 
 @app.get("/createIndex")
